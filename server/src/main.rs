@@ -5,9 +5,10 @@ pub mod entities;
 use dotenv::dotenv;
 use repositories::prelude::*;
 use handlers::prelude::*;
-use actix_web::{web::{self, Data}, App, HttpServer, middleware};
+use actix_web::{web::{self, Data}, App, HttpServer, middleware, http};
 use sea_orm::DatabaseConnection;
 use std::env;
+use actix_cors::Cors;
 use log::info;
 
 #[derive(Debug, Clone)]
@@ -32,8 +33,16 @@ async fn main() -> std::io::Result<()>{
         todos_repo
     };
     let server = HttpServer::new(move || {
+    let cors = Cors::default()
+              .allowed_origin("http://localhost:1212")
+              .allowed_methods(vec!["GET", "POST", "DELETE", "POST", "PUT"])
+              .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+              .allowed_header(http::header::CONTENT_TYPE)
+              .max_age(3600);
+
         App::new()
         .app_data(Data::new(state.clone()))
+        .wrap(cors)
         .wrap(middleware::Logger::default())
         .configure(config)    
     }).bind(&server_url)?;
